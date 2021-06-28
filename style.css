@@ -1,0 +1,12 @@
+.panel {
+	height: 300px;
+}
+
+#messageContainer {
+	overflow-y: hidden;
+	height: 74%;
+}
+
+#messageContainer:hover {
+	overflow-y: auto;
+}
