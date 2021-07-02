@@ -9,7 +9,6 @@ const currentUser = document.getElementById('currentUser');
 const clientsList = document.getElementById('list');
 const countOfUsers = document.getElementById('count-of-users');
 
-/*
 let users = [];
 
 const changeStatus = () => {
@@ -95,7 +94,7 @@ loginForm.addEventListener('submit', e => {
 
 		socket.addEventListener('message', response => {
 			printMessage(response.data);
-			// updateClients(response.data);
+			updateClients(response.data);
 			console.log(JSON.parse(response.data).clients);
 		});
 
@@ -114,7 +113,10 @@ loginForm.addEventListener('submit', e => {
 	}
 })
 
-*/
+
+
+// ==================== УПРОЩЕННАЯ МОДЕЛЬ ==============================
+/*
 
 const printMessage = message => {
 	const messageWrapper = document.createElement('div');
@@ -157,3 +159,4 @@ loginForm.addEventListener('submit', e => {
 		alert('Введите ник')
 	}
 })
+*/

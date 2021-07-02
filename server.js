@@ -3,7 +3,6 @@ const server = new WebSocket.Server({
 	port: 3000,
 });
 
-/*
 let clients = [];
 
 server.on('connection', ws => {
@@ -27,7 +26,10 @@ server.on('connection', ws => {
 	})
 });
 
-*/
+
+
+// ==================== УПРОЩЕННАЯ МОДЕЛЬ ==============================
+/*
 
 server.on('connection', ws => {
 	ws.send('Добро пожаловать');
@@ -44,4 +46,5 @@ server.on('connection', ws => {
 		});
 	})
  });
+ */
 
