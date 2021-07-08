@@ -1,50 +1,46 @@
-const WebSocket = require('ws');
-const server = new WebSocket.Server({
-	port: 3000,
-});
+const { Server } = require('ws');
 
-let clients = [];
+const wsServer = new Server({ port: 3000 });
 
-server.on('connection', ws => {
+const users = new Map;
+
+wsServer.on('connection', ws => {
+	users.set(ws, {});
+
 	ws.on('message', message => {
-		const data = JSON.parse(message);
+		const messageObj = JSON.parse(message);
+		let excludeItself = false;
 
-		if (data.type === 'hello') {
-			clients.unshift(data.name);
-			let uniqueClients = new Set(clients)
-			data.clients = [...uniqueClients];
-		} else if (data.type === 'bye') {
-			clients.splice(clients.indexOf(data.name), 1);
+		if (messageObj.type === 'hello') {
+			excludeItself = true;
+			users.get(ws).userName = messageObj.data.name;
+			ws.send(JSON.stringify({
+				type: 'user-list',
+				data: [...users.values()].map(item => item.userName)
+			}))
 		}
-		server.clients.forEach(client => {
-			client.send(JSON.stringify(data));
-		});
-	});
+
+		sendMessage(users, messageObj, ws, excludeItself)
+	})
 
 	ws.on('close', () => {
-		server.clients.send(JSON.stringify({type:'bye', name: '', text: 'Кто-то вышел из чата'}))
+		sendMessage(users, { type: 'bye' }, ws);
+		users.delete(ws);
 	})
-});
+})
 
+const sendMessage = (users, message, currentSocket, excludeSelf) => {
+	const wsData = users.get(currentSocket);
 
+	if (wsData) {
+		message.name = wsData.userName;
 
-// ==================== УПРОЩЕННАЯ МОДЕЛЬ ==============================
-/*
+		for (const user of users.keys()) {
+			if (user === currentSocket && excludeSelf) {
+				continue;
+			}
 
-server.on('connection', ws => {
-	ws.send('Добро пожаловать');
-	ws.on('message', message => {
-	  // отправим всем клиентам
-	
-	  server.clients.forEach(client => {
-		 client.send(message);
-	  });
-	});
-	ws.on('close', () => {
-		server.clients.forEach(client => {
-			client.send('Кто-то вышел');
-		});
-	})
- });
- */
-
+			user.send(JSON.stringify(message));
+		}
+	}
+}

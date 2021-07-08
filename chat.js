@@ -1,162 +1,175 @@
-const messages = document.getElementById('messages');
-const form = document.getElementById('form');
-const chatInput = form.querySelector('input');
-const login = document.getElementById('login');
-const chat = document.getElementById('chat');
-const loginInput = login.querySelector('input');
-const loginForm = document.getElementById('login-form');
-const currentUser = document.getElementById('currentUser');
-const clientsList = document.getElementById('list');
-const countOfUsers = document.getElementById('count-of-users');
+const socket = new WebSocket(`ws://localhost:3000`);
+const users = new Set;
 
-let users = [];
+const logIn = () => {
+	const loginForm = document.getElementById('login-form');
+	const user = loginForm.querySelector('input');
+	const currentUser = document.getElementById('currentUser');
 
-const changeStatus = () => {
-	login.classList.toggle('hidden');
-	chat.classList.toggle('hidden');
-}
+	loginForm.addEventListener('submit', e => {
+		e.preventDefault();
 
-const declOfNum = n => { 
-	const textArr = ['участник', 'участника', 'участников']
-	n = Math.abs(n) % 100; 
-	const n1 = n % 10;
-	if (n > 10 && n < 20) { return textArr[2]; }
-	if (n1 > 1 && n1 < 5) { return textArr[1]; }
-	if (n1 == 1) { return textArr[0]; }
-	return `${n} textArr[2]`;
-}
+		const name = user.value;
 
-const printMessage = message => {
-	const messageWrapper = document.createElement('div');
-	const received = JSON.parse(message);
-
-	if (received.type === ('hello' || 'bye')) {
-		if (currentUser.textContent === received.name) {
-			return
-		} else {
-			messageWrapper.textContent = received.text
-		};
-	};
-
-	messageWrapper.textContent = received.text;
-	messages.appendChild(messageWrapper);
-};
-
-const toSend = (type, name, text) => {
-	let newMessage = {
-		type: type,
-		name: name,
-		text: text,
-	};
-	return JSON.stringify(newMessage)
-}
-
-const updateClients = (serverMessage) => {
-	const received = JSON.parse(serverMessage);
-
-	if (received.type === 'hello') {
-
-		const clients = received.clients;
-		console.log(clients.length);
-
-		clients.forEach(el => {
-			if (el !== currentUser.textContent) {
-				const client = document.createElement('li');
-				client.classList.add('clients__member');
-				client.innerHTML = `
-					<div class="clients__image-wrap">
-						<img class="clients__img" src="./images/client-no-image.svg" alt="no-photo-client">
-					</div>
-					<span class="clients__name" id="currentUser">${el}</span>
-				`;
-				users.push(el);
-				clientsList.appendChild(client);
-			}
-		})
-	}
-}
-
-loginForm.addEventListener('submit', e => {
-	e.preventDefault();
-
-	let name = loginInput.value;
-
-	if (name !== '') {
-		const socket = new WebSocket('ws://localhost:3000');
-
-		socket.addEventListener('open', () => {
-			socket.send(toSend('hello', name, `Пользователь ${name} вошел в чат`))
-		});
-
-		socket.addEventListener('close', () => {
-			socket.send(toSend('bye', currentUser.textContent, `Пользователь ${name} покинул чат`))
-		});
-
-		socket.addEventListener('message', response => {
-			printMessage(response.data);
-			updateClients(response.data);
-			console.log(JSON.parse(response.data).clients);
-		});
-
-		form.addEventListener('submit', e => {
-			e.preventDefault();
-			socket.send(toSend('text', name, chatInput.value));
-			chatInput.value = '';
-			console.log(currentUser.textContent);
-		});
-
-		changeStatus();
-		currentUser.textContent = name;
-
-	} else {
-		alert('Введите ник')
-	}
-})
-
-
-
-// ==================== УПРОЩЕННАЯ МОДЕЛЬ ==============================
-/*
-
-const printMessage = message => {
-	const messageWrapper = document.createElement('div');
-	messageWrapper.textContent = message;
-	messages.appendChild(messageWrapper);
-};
-
-loginForm.addEventListener('submit', e => {
-	e.preventDefault();
-
-	let name = loginInput.value;
-
-	if (name !== '') {
-		const socket = new WebSocket('ws://localhost:3000');
-
-		socket.addEventListener('open', () => {
-			socket.send(`Пользователь ${name} вошел в чат`)
-		});
-
-		socket.addEventListener('close', () => {
-			socket.send(`Пользователь ${name} покинул чат`)
-		});
-
-		socket.addEventListener('message', response => {
-			printMessage(response.data);
-		});
-
-		form.addEventListener('submit', e => {
-			e.preventDefault();
-			socket.send(toSend('text', name, chatInput.value));
-			chatInput.value = '';
-			console.log(currentUser.textContent);
-		});
+		socket.send(JSON.stringify({
+			type: 'hello', 
+			data: { name }
+		}));
+		socket.addEventListener('message', e => getMessageFromServer(JSON.parse(e.data)));
 
 		login.classList.toggle('hidden');
 		chat.classList.toggle('hidden');
+
 		currentUser.textContent = name;
 
-	} else {
-		alert('Введите ник')
+		changeAvatar();
+	})
+}
+
+const getMessageFromServer = ({ type, name, data }) => {
+	switch (type) {
+		case 'hello':
+			users.add(name);
+			printClients();
+			addSystemMessage(`Пользователь ${name} вошел в чат`);
+			break;
+		case 'user-list':
+			data.forEach(item => {
+				users.add(item);
+				printClients();
+			})
+			break;
+		case 'bye':
+			users.delete(name);
+			printClients();
+			addSystemMessage(`Пользователь ${name} покинул чат`);
+			break;
+		case 'text':
+			addMessageToChat(name, data.message)
+			break;
 	}
-})
-*/
+}
+
+const addSystemMessage = message => {
+	const messages = document.getElementById('messages');
+	const div = document.createElement('div');
+
+	div.classList.add('chat-area__item', 'chat-area__item_system');
+	div.textContent = message;
+
+	messages.appendChild(div);
+	messages.scrollTop = messages.scrollHeight;
+}
+
+const addMessageToChat = (name, text) => {
+	const messages = document.getElementById('messages');
+	const date = new Date();
+	const hours = String(date.getHours()).padStart(2, 0);
+	const minutes = String(date.getMinutes()).padStart(2, 0);
+	const time = `${hours}:${minutes}`;
+	const div = document.createElement('div');
+
+	div.classList.add('chat-area__item');
+	div.innerHTML = `
+		<div class="chat-area__photo"></div>
+		<div class="chat-area__message message">
+			<div class="message__name">${name}</div>
+			<div class="message__block">
+				<span class="message__text">${text}</span>
+				<span class="message__time">${time}</span>
+			</div>
+		</div>
+	`;
+
+	messages.appendChild(div);
+	messages.scrollTop = messages.scrollHeight;
+}
+
+const printClients = () => {
+	const userList = document.getElementById('list');
+	const fragment = document.createDocumentFragment();
+
+	userList.innerHTML = '';
+
+	[...users].forEach(name => {
+		const li = document.createElement('li');
+		li.classList.add('clients__item');
+		li.innerHTML = `
+			<div class="clients__image-wrap clients__image-wrap_list"></div>
+			<div class="clients__name">${name}</div>
+		`;
+		fragment.appendChild(li);
+	})
+
+	userList.appendChild(fragment);
+
+	sanitizeClients();
+}
+
+const changeAvatar = () => {
+	const imageWrap =  document.getElementById('image-wrap')
+	const loadAvatar = document.getElementById('loadAvatar');
+	const fileReader = new FileReader();
+	const avatar = document.createElement('img');
+
+	avatar.classList.add('img', 'clients__img');
+
+	loadAvatar.addEventListener('change', e => {
+		imageWrap.appendChild(avatar);
+		
+		const [file] = e.target.files;
+
+		fileReader.readAsDataURL(file);
+	});
+
+	fileReader.addEventListener('load', () => {
+		avatar.src = fileReader.result;
+	});
+}
+
+// const declination = quantity => { 
+// 	const textArr = ['участник', 'участника', 'участников']
+// 	const mod100 = quantity % 100; 
+// 	const mod10 = n % 10;
+
+// 	if (mod100 > 10 && mod100 < 20) return textArr[2];
+// 	if (mod10 > 1 && mod10 < 5) return textArr[1];
+// 	if (mod10 == 1) return textArr[0];
+
+// 	return `${mod100} textArr[2]`;
+// }
+
+const sendMessage = () => {
+	const sendForm = document.getElementById('send-form');
+	const sendInput = sendForm.querySelector('input');
+
+	sendForm.addEventListener('submit', e => {
+		e.preventDefault();
+
+		const message = sendInput.value;
+		
+		if (message) {
+			socket.send(JSON.stringify({
+				type: 'text', 
+				data: { message }
+			}))
+		}
+
+		sendInput.value = '';
+	})
+}
+
+const sanitizeClients = () => {
+	const userList = document.getElementById('list');
+	const currentUser = document.getElementById('currentUser');
+
+	for (const item of userList.children) {
+
+		if (item.children[1].textContent === currentUser.textContent) {
+			item.remove();
+		}
+	}
+}
+
+logIn();
+sendMessage();

@@ -20,28 +20,24 @@
 					<button class="login__btn">Войти</button>
 				</form>
 			</div>
+
 			<div class="chat-room hidden" id="chat">
 				<div class="clients">
 					<h3 class="clients__title">Участники</h3>
-					<div class="clients__current">
-						<div class="clients__image-wrap">
-							<img class="clients__img" src="./images/client-no-image.svg" alt="no-photo-client">
-						</div>
+					<div class="clients__item">
+						<input class="clients__load-img" type="file" id="loadAvatar">
+						<label for="loadAvatar" class="clients__image-wrap" id="image-wrap"></label>
 						<span class="clients__name" id="currentUser"></span>
 					</div>
-					<ul class="clients__list" id="list">
-						
-					</ul>
+					<ul class="clients__list" id="list"></ul>
 				</div>
 				<div class="chat-area">
 					<div class="header">
 						<h4 class="header__title">Чат</h4>
 						<span class="header__members" id="count-of-users"></span>
 					</div>
-					<div class="chat-area__messages" id="messages">
-						
-					</div>
-					<form class="chat-area__form" id="form">
+					<div class="chat-area__messages" id="messages"></div>
+					<form class="chat-area__form" id="send-form">
 						<input type="text" class="chat-area__input" placeholder="Введите сообщение...">
 						<button type="submit" class="chat-area__btn">Отправить</button>
 					</form>
