@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<link rel="stylesheet" href="style.css">
+		<title>Чат</title>
+	</head>
+	<body>
+		<div class="wrapper">
+			<div class="login" id="login">
+				<form class="login__modal" id="login-form">
+					<div class="login__image-wrap">
+						<img src="./images/chat-icon.svg" alt="auth-logo" class="login__img">
+					</div>
+					<h2 class="login__title">Авторизация</h2>
+					<h3 class="login__subtitle">Введите пожалуйста свой ник для дальнейшей авторизации</h3>
+					<input type="text" class="login__input" autofocus autocomplete="off" placeholder="Введите свой ник">
+					<button class="login__btn">Войти</button>
+				</form>
+			</div>
+
+			<div class="chat-room hidden" id="chat">
+				<div class="clients">
+					<h3 class="clients__title">Участники</h3>
+					<div class="clients__item">
+						<input class="clients__load-img" type="file" id="loadAvatar">
+						<label for="loadAvatar" class="clients__image-wrap" id="image-wrap"></label>
+						<span class="clients__name" id="currentUser"></span>
+					</div>
+					<ul class="clients__list" id="list"></ul>
+				</div>
+				<div class="chat-area">
+					<div class="header">
+						<h4 class="header__title">Чат</h4>
+						<span class="header__members" id="count-of-users"></span>
+					</div>
+					<div class="chat-area__messages" id="messages"></div>
+					<form class="chat-area__form" id="send-form">
+						<input type="text" class="chat-area__input" placeholder="Введите сообщение...">
+						<button type="submit" class="chat-area__btn">Отправить</button>
+					</form>
+				</div>
+			</div>
+		</div>
+		<script src="chat.js"></script>
+	</body>
+</html>
